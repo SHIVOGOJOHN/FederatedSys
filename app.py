@@ -25,16 +25,8 @@ app=FastAPI()
 
 # Load models and scalers
 model_path = "data/global_model_round_10.keras"
-# Rebuild model architecture and load weights
-fed_model = tf.keras.Sequential([
-    tf.keras.layers.Input(shape=(len(expected_order),)), # Use len(expected_order) for input shape
-    tf.keras.layers.Dense(64, activation='relu'),
-    tf.keras.layers.Dropout(0.3),
-    tf.keras.layers.Dense(32, activation='relu'),
-    tf.keras.layers.Dropout(0.3),
-    tf.keras.layers.Dense(1, activation='sigmoid')
-])
-fed_model.load_weights(model_path)
+# Load the model directly, which includes architecture and weights
+fed_model = load_model(model_path)
 
 fed_scaler = joblib.load("data/scaler_store_a.joblib")
 
@@ -208,3 +200,4 @@ def get_dashboard_data():
         return {"error": "No retraining data available yet to generate a dashboard."}
     except Exception as e:
         return {"error": f"An error occurred: {e}"}
+
