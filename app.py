@@ -96,7 +96,7 @@ def predict_fed(input: FedInput):
     last_updated = os.path.getmtime(model_path)
 
     # Calculate SHAP values
-    explainer = shap.DeepExplainer(fed_model, background_data)
+    explainer = shap.GradientExplainer(fed_model, background_data)
     shap_values = explainer.shap_values(input_scaled) # This is an array of shape (1, 20, 1)
 
     # Map SHAP values to feature names
