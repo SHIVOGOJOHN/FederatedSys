@@ -97,20 +97,27 @@ def predict_fed(input: FedInput):
 
     # Calculate SHAP values
     explainer = shap.GradientExplainer(fed_model, background_data)
-    shap_values = explainer.shap_values(input_scaled) # This is an array of shape (1, 20, 1)
+    shap_values = explainer.shap_values(input_scaled)
+
+    # The output of shap_values for a single sample is an array of shape (1, num_features)
+    # We need the values for the first (and only) sample.
+    shap_values_single = shap_values[0] # This gives an array of shape (num_features,)
 
     # Map SHAP values to feature names
-    feature_importances = {}
-    # shap_values[0] gives us the (20, 1) array for our single sample
-    # shap_values[0][i] gives the i-th feature's value in a (1,) array
-    # shap_values[0][i][0] gives the float
-    for i, feature_name in enumerate(expected_order):
-        feature_importances[feature_name] = float(shap_values[0][i][0])
+    feature_importances = {
+        feature_name: float(shap_values_single[i])
+        for i, feature_name in enumerate(expected_order)
+    }
 
     # Prepare data for SHAP plot
+    # explainer.expected_value is often a single float, not an array
+    expected_value = explainer.expected_value
+    if isinstance(expected_value, np.ndarray):
+        expected_value = expected_value[0] # Handle case where it might be an array with one value
+
     shap_plot_data = {
-        "shap_values": [v[0] for v in shap_values[0]], # Reshape from (20, 1) to (20,)
-        "expected_value": float(explainer.expected_value[0]),
+        "shap_values": shap_values_single.tolist(),
+        "expected_value": float(expected_value),
         "feature_values": input_array[0].tolist(),
         "feature_names": expected_order
     }
@@ -149,7 +156,7 @@ def get_dashboard_data():
         sample_size_shap = min(len(X_scaled), 200) # Use up to 200 samples for global explanation
         X_scaled_sample = X_scaled[np.random.choice(X_scaled.shape[0], sample_size_shap, replace=False)]
 
-        explainer = shap.DeepExplainer(fed_model, background_data)
+        explainer = shap.GradientExplainer(fed_model, background_data)
         shap_values_global = explainer.shap_values(X_scaled_sample)
 
         if isinstance(shap_values_global, list):
@@ -200,4 +207,6 @@ def get_dashboard_data():
         return {"error": "No retraining data available yet to generate a dashboard."}
     except Exception as e:
         return {"error": f"An error occurred: {e}"}
+
+
 
