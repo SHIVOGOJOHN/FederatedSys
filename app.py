@@ -24,7 +24,7 @@ expected_order = ['Age', 'Income', 'Loyalty_Score', 'Prior_Purchases',
 app=FastAPI()
 
 # Load models and scalers
-model_path = r"C:\Users\adm\Documents\Flask\BlockchainAI\models\global_model_round_10.keras"
+model_path = "data/global_model_round_10.keras"
 # Rebuild model architecture and load weights
 fed_model = tf.keras.Sequential([
     tf.keras.layers.Input(shape=(len(expected_order),)), # Use len(expected_order) for input shape
@@ -36,11 +36,11 @@ fed_model = tf.keras.Sequential([
 ])
 fed_model.load_weights(model_path)
 
-fed_scaler = joblib.load(r"C:\Users\adm\Documents\Flask\BlockchainAI\scalers\scaler_store_a.joblib")
+fed_scaler = joblib.load("data/scaler_store_a.joblib")
 
 # Define a background dataset for SHAP DeepExplainer
 # Use real data from user predictions if available, otherwise fall back to random.
-retraining_file_path = r'C:\Users\adm\Documents\Flask\BlockchainAI\manual_predictions_for_retraining.csv'
+retraining_file_path = 'data/manual_predictions_for_retraining.csv'
 try:
     df = pd.read_csv(retraining_file_path)
     if 'Will_Buy' in df.columns:
@@ -56,7 +56,7 @@ try:
     background_data = fed_scaler.transform(background_df.to_numpy())
 
 except (FileNotFoundError, pd.errors.EmptyDataError, KeyError):
-    # Fallback to random data if file is not found, empty, or has wrong columns.
+    # Fallback to random data if the file is not found, empty, or has the wrong columns.
     background_data_shape = (100, len(expected_order))
     background_data = fed_scaler.transform(np.random.rand(*background_data_shape))
 
@@ -136,7 +136,7 @@ from sklearn.metrics import accuracy_score
 
 @app.get('/dashboard_data')
 def get_dashboard_data():
-    retraining_file_path = r'C:\Users\adm\Documents\Flask\BlockchainAI\manual_predictions_for_retraining.csv'
+    retraining_file_path = 'data/manual_predictions_for_retraining.csv'
     try:
         df = pd.read_csv(retraining_file_path)
         if df.empty or 'Will_Buy' not in df.columns:
@@ -208,6 +208,3 @@ def get_dashboard_data():
         return {"error": "No retraining data available yet to generate a dashboard."}
     except Exception as e:
         return {"error": f"An error occurred: {e}"}
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000) 
