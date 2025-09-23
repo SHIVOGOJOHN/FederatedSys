@@ -157,7 +157,11 @@ def get_dashboard_data():
         sample_size_shap = min(len(X_scaled), 200) # Use up to 200 samples for global explanation
         X_scaled_sample = X_scaled[np.random.choice(X_scaled.shape[0], sample_size_shap, replace=False)]
 
-        explainer = shap.DeepExplainer(fed_model, background_data)
+        #explainer = shap.DeepExplainer(fed_model, background_data)
+        def model_wrapper(x):
+            return fed_model(x)[:, 0] # Take the first (and only) output, and make it 1D
+            
+        explainer = shap.DeepExplainer(model_wrapper, background_data)
         shap_values_global = explainer.shap_values(X_scaled_sample)
 
         if isinstance(shap_values_global, list):
